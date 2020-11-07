@@ -8,7 +8,8 @@
             {% for date in branch['available_dates'] %}
                 <li style="margin:0 0 10px 30px;"
                     class="{% if loop.first %}list-item-first{% elif loop.last %}list-item-last{% endif %}">
-                    {{ weekday(date) }} - {{ date }} - {{ branch['available_dates'][date][0] }} - <a
+                    <img src="{{ api_gateway }}/check?token={{ token }}&branch_id={{ branch['id'] }}&date={{ date }}&time={{ branch['available_dates'][date][0] }}"/> {{ weekday(date) }}
+                    - {{ date }} - {{ branch['available_dates'][date][0] }} - <a
                         href="{{ api_gateway }}/book?token={{ token }}&branch_id={{ branch['id'] }}&date={{ date }}&time={{ branch['available_dates'][date][0] }}">Book
                     Now!</a>
                 </li>

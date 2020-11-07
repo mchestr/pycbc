@@ -23,7 +23,7 @@ def date_search_output(branches_times_search_json, service_search_json,
 def encrypted_token(encrypt_key, user_data, service_qp_id, service_name, service_id):
     return token.encrypt(encrypt_key, {
         'user': user_data,
-        'data': {
+        'service': {
             'name': service_name,
             'qpId': service_qp_id,
             'publicId': service_id,

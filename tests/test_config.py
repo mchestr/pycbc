@@ -31,6 +31,17 @@ def no_override_event():
 
 
 @pytest.fixture
+def override_users_event():
+    return dict(
+        config=dict(
+            users=[dict(
+                email='override-email@test.com',
+            )],
+        ),
+    )
+
+
+@pytest.fixture
 def override_all_event():
     return dict(
         config=dict(
@@ -68,6 +79,16 @@ def mock_s3_with_values():
     with patch('pycbc.config.s3') as s3_mock:
         s3_mock.get_object.return_value = {
             'Body': StringIO('{"sender_email": "test"}'),
+        }
+        yield s3_mock
+    assert s3_mock.get_object.called
+
+
+@pytest.fixture
+def mock_s3_user():
+    with patch('pycbc.config.s3') as s3_mock:
+        s3_mock.get_object.return_value = {
+            'Body': StringIO('{"users": [{"email":"new-email@test.com"}]}'),
         }
         yield s3_mock
     assert s3_mock.get_object.called
@@ -127,6 +148,11 @@ def test_override_precedence(override_s3_filename, mock_s3_with_values):
         Bucket='test',
         Key='1',
     )
+
+
+def test_event_user_override(mock_s3_user, override_users_event):
+    cfg = config.load(override_users_event)
+    assert cfg.users[0].email == 'override-email@test.com'
 
 
 def test_deeply_nested_merge(mock_s3):

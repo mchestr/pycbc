@@ -18,6 +18,7 @@ SERVICE_MAP = {
 def handler(event, context):
     config = load(event)
     logging.config.dictConfig(config.logging)
+    log.info(f'Event: {event}')
 
     for record in event['Records']:
         notify_users(config, json.loads(record['Sns']['Message']))
@@ -53,7 +54,10 @@ def match_and_notify_user(config, user, input_data):
         log.info('No available slots after filter')
         return
 
-    encrypted_token = token.encrypt(config.encrypt_key, d(user=user, data=input_data))
+    encrypted_token = token.encrypt(config.encrypt_key,
+                                    d(user=user, service=d(publicId=input_data.publicId,
+                                                           name=input_data.name,
+                                                           qpId=input_data.qpId)))
     template = templates.generate_email(config, user.first_name, email_ctx, encrypted_token)
     subject = f'{len(email_ctx)} Locations Have An Available ICBC Timeslot!'
     if len(email_ctx) == 1:

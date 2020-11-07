@@ -58,6 +58,7 @@ def load(event):
             _from_s3(s3_bucket, s3_filename),
             _from_env(env_prefix),
             event_override,
+            {'s3_bucket': s3_bucket, 's3_filename': s3_filename}
         ])
     ))
 

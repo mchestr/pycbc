@@ -23,6 +23,7 @@ class Input(TypedDict):
 def handler(event, context):
     config = load(event)
     logging.config.dictConfig(config.logging)
+    log.info(f'Event: {event}')
 
     data = available_timeslots(event)
     if data and config.get('sns_topic'):
@@ -35,7 +36,6 @@ def handler(event, context):
 
 def available_timeslots(input_data: Input):
     input_data = _set_defaults(input_data)
-    log.info(f'Input: {input_data}')
     pycbc = client.WebBookingClient()
 
     services = filter(

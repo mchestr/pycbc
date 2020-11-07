@@ -18,7 +18,7 @@ def handler(event, context):
         query_params = event['queryStringParameters']
         query_token = query_params.pop('token')
 
-        payload = token.decrypt(config.encrypt_key, query_token)
+        payload = token.decrypt(config.encrypt_key, query_token, ttl=3600)
     except InvalidToken:
         return {
             'statusCode': 400,
@@ -30,12 +30,13 @@ def handler(event, context):
             'statusCode': 401,
             'body': 'UNAUTHORIZED',
         }
+    log.info(f'Payload: {payload}')
 
     branch = d(branch_id=query_params['branch_id'],
                date=query_params['date'],
                time=query_params['time'])
     try:
-        reservation = reserve(payload.data, branch, payload.user)
+        reservation = reserve(payload.service, branch, payload.user)
         return {
             'statusCode': 200,
             'body': json.dumps(reservation),

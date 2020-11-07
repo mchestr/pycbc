@@ -194,10 +194,10 @@ def branches_dates_search_stub(branches_dates_search_json, branch_id, service_id
 
 @pytest.fixture
 def branches_times_search_gen(branches_times_search_json, branch_id, service_id, mock_responses):
-    def generator(date):
+    def generator(date, data=None):
         url = WBC.BRANCH_DATES_TIMES_URL.format(branch_id=branch_id, date=date)
         url += f';servicePublicId={service_id};customSlotLength=15'
-        mock_responses.add(responses.GET, url, json=branches_times_search_json)
+        mock_responses.add(responses.GET, url, json=data if data is not None else branches_times_search_json)
         return mock_responses
 
     return generator
