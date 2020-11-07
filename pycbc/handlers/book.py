@@ -61,6 +61,5 @@ def reserve(service, branch, user):
         pycbc.appointment_cancel(appointments[0].publicId)
         log.info(f'Appointment cancelled: {appointments[0]}')
 
-    date_of_birth = user.pop('dob')
     return pycbc.appointment_confirm(service.publicId, service.name, service.qpId, reservation.publicId,
-                                     date_of_birth=date_of_birth, **user)
+                                     user.first_name, user.last_name, user.email, user.phone, user.dob)

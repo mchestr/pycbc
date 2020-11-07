@@ -1,10 +1,10 @@
 import requests
 
 
-def generate():
+def generate(config):
     resp = requests.get('https://icanhazdadjoke.com/', headers={
         'Accept': 'text/plain',
-        'User-Agent': 'https://github.com/mchestr'
+        'User-Agent': config.sender_email,
     })
     resp.raise_for_status()
     return resp.text

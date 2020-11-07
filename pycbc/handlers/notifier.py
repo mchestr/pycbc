@@ -58,7 +58,7 @@ def match_and_notify_user(config, user, input_data):
                                     d(user=user, service=d(publicId=input_data.publicId,
                                                            name=input_data.name,
                                                            qpId=input_data.qpId)))
-    template = templates.generate_email(config, user.first_name, email_ctx, encrypted_token)
+    template = templates.generate_email(config, user, email_ctx, encrypted_token)
     subject = f'{len(email_ctx)} Locations Have An Available ICBC Timeslot!'
     if len(email_ctx) == 1:
         subject = f'{email_ctx[0]["name"]} Has An Available ICBC Timeslot!'

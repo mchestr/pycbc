@@ -1,4 +1,5 @@
 import logging
+import random
 
 import arrow
 import calendar
@@ -18,15 +19,16 @@ def weekday(date):
 env.globals['weekday'] = weekday
 
 
-def generate_email(config, name, branches, encrypted_token, template='fancy_email.jinja2'):
+def generate_email(config, user, branches, encrypted_token, template='fancy_email.jinja2'):
     template = env.get_template(template)
-    joke = ''
+    special_greeting = ''
     try:
-        joke = jokes.generate()
+        options = [jokes.generate(config), *user.get('special_greetings', [])]
+        special_greeting = random.choice(options)
     except Exception as exc:
         log.exception(exc)
 
     content = template.render(branches=branches, token=encrypted_token,
                               api_gateway=config['api_gateway'],
-                              name=name, joke=joke)
+                              name=user.first_name, special=special_greeting)
     return content
