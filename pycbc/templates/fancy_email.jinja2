@@ -1,0 +1,18 @@
+{% extends "fancy_base.jinja2" %}
+{% block content %}
+    <h2 style="margin: 0 0 10px 0; font-family: sans-serif; font-size: 18px; line-height: 22px; color: #333333; font-weight: bold;">{{ name }},
+        Here are some available timeslots!</h2>
+    <ul style="padding: 0; margin: 0 0 10px 0; list-style-type: disc;">
+        {% for branch in branches %}
+            <h3>{{ branch['name'] }} - {{ branch['addressLine1'] }}</h3>
+            {% for date in branch['available_dates'] %}
+                <li style="margin:0 0 10px 30px;"
+                    class="{% if loop.first %}list-item-first{% elif loop.last %}list-item-last{% endif %}">
+                    {{ weekday(date) }} - {{ date }} - {{ branch['available_dates'][date][0] }} - <a
+                        href="{{ api_gateway }}/book?token={{ token }}&branch_id={{ branch['id'] }}&date={{ date }}&time={{ branch['available_dates'][date][0] }}">Book
+                    Now!</a>
+                </li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+{% endblock %}

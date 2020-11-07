@@ -1,0 +1,14 @@
+venv/
+setupmeta*
+.eggs/
+*.egg-info/
+__pycache__/
+dist/
+.vscode/
+data.json
+*.sqlite
+node_modules/
+.serverless/
+config.yaml
+integration_tests
+.idea

@@ -1,0 +1,16 @@
+{% extends "base.jinja2" %}
+{% block content %}
+    <h2>Hey {{ name }}, here are some available timeslots!</h2>
+    <p>
+        {% for branch in branches %}
+            <h3>{{ branch['name'] }} - {{ branch['addressLine1'] }}</h3>
+            <ul>
+                {% for date in branch['available_dates'] %}
+                    <li>{{ weekday(date) }} - {{ date }} - {{ branch['available_dates'][date][0] }} - <a
+                            href="{{ api_gateway }}/book?token={{ token }}&branch_id={{ branch['id'] }}&date={{ date }}&time={{ branch['available_dates'][date][0] }}">Book
+                        Now!</a></li>
+                {% endfor %}
+            </ul>
+        {% endfor %}
+    </p>
+{% endblock %}

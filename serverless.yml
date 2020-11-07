@@ -1,0 +1,384 @@
+service: pycbc
+frameworkVersion: "2"
+
+plugins:
+  - serverless-python-requirements
+
+package:
+  exclude:
+    - tests/**
+    - venv/**
+    - package-lock.json
+    - node_modules/**
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: us-west-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - "ses:SendEmail"
+      Resource:
+        - Fn::Join:
+            - ":"
+            - - "arn:aws:ses"
+              - Ref: AWS::Region
+              - Ref: AWS::AccountId
+              - "identity/*"
+    - Effect: Allow
+      Action:
+        - "SNS:Publish"
+      Resource:
+        - Fn::Join:
+            - ":"
+            - - "arn:aws:sns"
+              - Ref: AWS::Region
+              - Ref: AWS::AccountId
+              - "pycbc-available-timeslots"
+    - Effect: Allow
+      Action:
+        - "s3:GetObject"
+      Resource:
+        - "arn:aws:s3:::pycbc-${self:provider.stage}/*"
+  environment:
+    PYCBC_API_GATEWAY:
+      Fn::Join:
+        - ""
+        - - "https://"
+          - Ref: "ApiGatewayRestApi"
+          - ".execute-api."
+          - ${self:provider.region}
+          - "."
+          - Ref: "AWS::URLSuffix"
+          - "/${self:provider.stage}"
+    PYCBC_SNS_TOPIC:
+      Fn::Join:
+        - ":"
+        - - "arn:aws:sns"
+          - Ref: AWS::Region
+          - Ref: AWS::AccountId
+          - "pycbc-available-timeslots"
+    PYCBC_S3_BUCKET: pycbc-${self:provider.stage}
+
+functions:
+  available-timeslots:
+    handler: pycbc.handlers.search.handler
+    timeout: 20
+    memorySize: 128
+    events:
+      - schedule:
+          rate: rate(15 minutes)
+          enabled: true
+          input:
+            service_ids:
+              - "27"
+            max_times: 7
+            month_offset: 1
+            branches:
+              - Burnaby
+              - East Van
+              - Metrotown
+              - North Vancouver
+              - Port Coquitlam
+              - Point Grey
+              - Richmond
+              - Surrey
+              - Royal Centre
+  notify:
+    handler: pycbc.handlers.notifier.handler
+    memorySize: 128
+    timeout: 6
+    events:
+      - sns:
+          arn:
+            Ref: SNSTopic
+          topicName: pycbc-available-timeslots
+  book-appointment:
+    timeout: 10
+    handler: pycbc.handlers.book.handler
+    memorySize: 128
+    events:
+      - http:
+          path: book
+          method: get
+
+resources:
+  Resources:
+    SNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: pycbc-available-timeslots
+    S3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: pycbc-${self:provider.stage}
+    AlarmAvailableTimeSlotsLambdaError:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        ActionsEnabled: true
+        AlarmActions:
+          - Fn::Join:
+              - ":"
+              - - "arn:aws:sns"
+                - Ref: AWS::Region
+                - Ref: AWS::AccountId
+                - "Default_CloudWatch_Alarms_Topic"
+        AlarmName: available-timeslots-${self:provider.stage}-error
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        EvaluationPeriods: 2
+        MetricName: Errors
+        Namespace: AWS/Lambda
+        Statistic: Sum
+        TreatMissingData: breaching
+        Period: 1800
+        Threshold: 2
+        Dimensions:
+          - Name: FunctionName
+            Value: pycbc-${self:provider.stage}-available-timeslots
+    AlarmNotifyLambdaError:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        ActionsEnabled: true
+        AlarmActions:
+          - Fn::Join:
+              - ":"
+              - - "arn:aws:sns"
+                - Ref: AWS::Region
+                - Ref: AWS::AccountId
+                - "Default_CloudWatch_Alarms_Topic"
+        AlarmName: notify-${self:provider.stage}-error
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        EvaluationPeriods: 1
+        MetricName: Errors
+        Namespace: AWS/Lambda
+        Statistic: Sum
+        TreatMissingData: notBreaching
+        Period: 300
+        Threshold: 1
+        Dimensions:
+          - Name: FunctionName
+            Value: pycbc-${self:provider.stage}-notify
+    AlarmBookAppointmentLambdaError:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        ActionsEnabled: true
+        AlarmActions:
+          - Fn::Join:
+              - ":"
+              - - "arn:aws:sns"
+                - Ref: AWS::Region
+                - Ref: AWS::AccountId
+                - "Default_CloudWatch_Alarms_Topic"
+        AlarmName: book-appointment-${self:provider.stage}-error
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        EvaluationPeriods: 1
+        MetricName: Errors
+        Namespace: AWS/Lambda
+        Statistic: Sum
+        TreatMissingData: notBreaching
+        Period: 300
+        Threshold: 1
+        Dimensions:
+          - Name: FunctionName
+            Value: pycbc-${self:provider.stage}-book-appointment
+    Dashboard:
+      Type: AWS::CloudWatch::Dashboard
+      Properties:
+        DashboardName: PyCBC-Overview
+        DashboardBody: >
+          {
+            "widgets": [
+              {
+                "type": "metric",
+                "x": 0,
+                "y": 3,
+                "width": 9,
+                "height": 6,
+                "properties": {
+                  "view": "timeSeries",
+                  "stacked": false,
+                  "metrics": [
+                    [
+                      "AWS/Lambda",
+                      "Errors",
+                      "FunctionName",
+                      "pycbc-${self:provider.stage}-available-timeslots"
+                    ],
+                    [
+                      "...",
+                      "pycbc-${self:provider.stage}-notify"
+                    ],
+                    [
+                      "...",
+                      "pycbc-${self:provider.stage}-book-appointment"
+                    ]
+                  ],
+                  "region": "${self:provider.region}",
+                  "period": 300
+                }
+              },
+              {
+                "type": "metric",
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 3,
+                "properties": {
+                  "metrics": [
+                    [
+                      "AWS/SNS",
+                      "NumberOfMessagesPublished",
+                      "TopicName",
+                      "pycbc-available-timeslots"
+                    ]
+                  ],
+                  "view": "singleValue",
+                  "region": "${self:provider.region}",
+                  "stat": "SampleCount",
+                  "period": 300,
+                  "singleValueFullPrecision": false,
+                  "setPeriodToTimeRange": true,
+                  "title": "Notifications Sent"
+                }
+              },
+              {
+                "type": "metric",
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 3,
+                "properties": {
+                  "metrics": [
+                    [
+                      "AWS/SES",
+                      "Send"
+                    ]
+                  ],
+                  "view": "singleValue",
+                  "region": "${self:provider.region}",
+                  "setPeriodToTimeRange": true,
+                  "stat": "SampleCount",
+                  "period": 300,
+                  "title": "Emails Sent"
+                }
+              },
+              {
+                "type": "metric",
+                "x": 9,
+                "y": 3,
+                "width": 9,
+                "height": 6,
+                "properties": {
+                  "metrics": [
+                    [
+                      "AWS/Lambda",
+                      "Invocations",
+                      "FunctionName",
+                      "pycbc-${self:provider.stage}-available-timeslots"
+                    ],
+                    [
+                      "...",
+                      "pycbc-${self:provider.stage}-notify"
+                    ],
+                    [
+                      "...",
+                      "pycbc-${self:provider.stage}-book-appointment"
+                    ]
+                  ],
+                  "view": "timeSeries",
+                  "stacked": false,
+                  "region": "${self:provider.region}",
+                  "stat": "SampleCount",
+                  "period": 900
+                }
+              },
+              {
+                "type": "metric",
+                "x": 9,
+                "y": 9,
+                "width": 9,
+                "height": 6,
+                "properties": {
+                  "metrics": [
+                    [
+                      "AWS/Lambda",
+                      "Duration",
+                      "FunctionName",
+                      "pycbc-${self:provider.stage}-available-timeslots"
+                    ],
+                    [
+                      "...",
+                      "pycbc-${self:provider.stage}-notify"
+                    ],
+                    [
+                      "...",
+                      "pycbc-${self:provider.stage}-book-appointment"
+                    ]
+                  ],
+                  "view": "timeSeries",
+                  "stacked": false,
+                  "region": "${self:provider.region}",
+                  "stat": "Average",
+                  "period": 900
+                }
+              },
+              {
+                "type": "metric",
+                "x": 0,
+                "y": 9,
+                "width": 9,
+                "height": 6,
+                "properties": {
+                  "view": "timeSeries",
+                  "stacked": false,
+                  "metrics": [
+                    [
+                      "AWS/ApiGateway",
+                      "5XXError",
+                      "ApiName",
+                      "${self:provider.stage}-pycbc"
+                    ],
+                    [
+                      ".",
+                      "4XXError",
+                      ".",
+                      "."
+                    ],
+                    [
+                      ".",
+                      "Count",
+                      ".",
+                      "."
+                    ]
+                  ],
+                  "region": "${self:provider.region}",
+                  "title": "API Requests"
+                }
+              },
+              {
+                "type": "metric",
+                "x": 12,
+                "y": 0,
+                "width": 6,
+                "height": 3,
+                "properties": {
+                  "metrics": [
+                    [
+                      "pycbc-${self:provider.stage}",
+                      "BookingAppointment",
+                      {
+                        "yAxis": "left"
+                      }
+                    ]
+                  ],
+                  "view": "singleValue",
+                  "region": "${self:provider.region}",
+                  "title": "Booked Appointments",
+                  "stat": "SampleCount",
+                  "period": 60,
+                  "setPeriodToTimeRange": true
+                }
+              }
+            ]
+          }

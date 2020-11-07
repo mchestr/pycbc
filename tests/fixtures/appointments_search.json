@@ -1,0 +1,64 @@
+[
+  {
+    "allday": false,
+    "appId": "concierge",
+    "blocking": false,
+    "branch": {
+      "addressCity": "Burnaby",
+      "addressLine1": "3880 Lougheed Highway",
+      "addressZip": "V5C6N4",
+      "custom": "{\"names\":{\"en\":\"Burnaby\"}}",
+      "id": "53851ce8b410de56e26a0f0d2eda5a3e8d8cf4e05cc1b21af70121f53ef53b5d",
+      "internalId": 2,
+      "name": "Burnaby",
+      "qpId": "11"
+    },
+    "branchId": 2,
+    "branchName": "Burnaby",
+    "created": 1603648134364,
+    "customSlotLength": 15,
+    "customer": {
+      "dateOfBirth": "1951-01-10",
+      "email": "Test@test.com",
+      "externalId": "",
+      "firstName": "Test",
+      "id": 850773,
+      "lastName": "Test",
+      "phone": "11111111111",
+      "publicId": "44ae51cf52dbf349a98096717a807b3a0716b336aa76ec1f5cd04fc2544b3b95"
+    },
+    "date": "2021-01-08",
+    "duration": 15,
+    "externalId": "8513731445",
+    "id": 718606,
+    "languageCode": "en",
+    "peopleServices": [
+      {
+        "adult": 1,
+        "child": 0,
+        "name": "B: Single knowledge test for a new or expired learner’s licence (45 min)",
+        "publicId": "da8488da9b5df26d32ca58c6d6a7973bedd5d98ad052d62b468d3b04b080ea25",
+        "qpId": "27"
+      }
+    ],
+    "publicBranchId": "53851ce8b410de56e26a0f0d2eda5a3e8d8cf4e05cc1b21af70121f53ef53b5d",
+    "publicId": "c2d3fec94a0d78b5079ecd72476b2afb4cf924b11bd441c4cf0b65d84f352c69",
+    "publicServiceId": "da8488da9b5df26d32ca58c6d6a7973bedd5d98ad052d62b468d3b04b080ea25",
+    "qpId": 851373,
+    "resourceId": 1,
+    "serviceId": 5,
+    "serviceName": "B: Single knowledge test for a new or expired learner’s licence (45 min)",
+    "serviceNames": {},
+    "services": [
+      {
+        "internalId": 5,
+        "langNames": {},
+        "name": "B: Single knowledge test for a new or expired learner’s licence (45 min)",
+        "publicId": "da8488da9b5df26d32ca58c6d6a7973bedd5d98ad052d62b468d3b04b080ea25"
+      }
+    ],
+    "time": "14:45 PM",
+    "title": "Qmatic Web Booking",
+    "totalCost": 0
+  }
+]
